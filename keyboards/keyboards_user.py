@@ -90,7 +90,7 @@ def keyboards_continue_photo():
 def keyboards_all_done():
     logging.info("keyboards_all_done")
     button_1 = InlineKeyboardButton(text='Все верно',  callback_data='all_good')
-    button_2 = InlineKeyboardButton(text='Изменить', callback_data='yes_feedback')
+    button_2 = InlineKeyboardButton(text='Отмена', callback_data='yes_feedback')
     keyboard = InlineKeyboardMarkup(inline_keyboard=[[button_1, button_2]],)
     return keyboard
 
