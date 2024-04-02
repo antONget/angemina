@@ -423,18 +423,17 @@ async def process_no_feedback(callback: CallbackQuery, state: FSMContext) -> Non
     media = []
     media.append(InputMediaPhoto(media=image_1))
     media.append(InputMediaPhoto(media=image_2))
-    await callback.message.answer_media_group(media=media)
+
     await asyncio.sleep(3)
     await callback.message.answer(text=f'За отзыв без фото вы можете получить 150₽.\n'  
-                                       f' 1. Напишите отзыв не менее чем из двух предложений, с оценкой '
+                                       f' 1. Напишите отзыв не менее, чем из двух предложений, с оценкой '
                                        f'5 ⭐️ звезд.\n'
                                        f' 2. Разместите отзыв через мобильное приложение WB.\n'
-                                       f' 3. В отзыве не упоминайте нашу визитку и не размещайте ее на фотографиях.\n\n'
-                                       f'При не выполнении всех условий  мы оставляем за собой право'
-                                       f' отказать в вознаграждении.')
+                                       f' 3. В отзыве не упоминайте нашу визитку и не размещайте ее на фотографиях.\n\n')
     await asyncio.sleep(3)
+    await callback.message.answer_media_group(media=media)
     await callback.message.answer(text=f'За отзыв с фото вы можете получить 250₽.\n'
-                                       f' 1. Напишите отзыв не менее чем из двух предложений, с оценкой '
+                                       f' 1. Напишите отзыв не менее, чем из двух предложений, с оценкой '
                                        f'5 ⭐️ звезд.\n'
                                        f'Прикрепите к отзыву 5 качественных фотографий, как в примере выше.\n'
                                        f'Одежду на фотографиях должно быть хорошо видно! Изображения чёткие, вещи'
@@ -442,8 +441,8 @@ async def process_no_feedback(callback: CallbackQuery, state: FSMContext) -> Non
                                        f' разных планов и ракурсов (сзади/спереди). В кадре нет бардака и посторонних'
                                        f' предметов.\n'
                                        f' 2. Разместите отзыв через мобильное приложение WB.\n'
-                                       f' 3. В отзыве не упоминайте нашу визитку и не размещайте ее на фотографиях.\n\n'
-                                       f'При не выполнении всех условий  мы оставляем за собой право'
+                                       f' 3. В отзыве не упоминайте нашу визитку и не размещайте ее на фотографиях.\n\n')
+    await callback.message.answer(text=f'При не выполнении всех условий, мы оставляем за собой право'
                                        f' отказать в вознаграждении.')
 
 
@@ -453,6 +452,5 @@ async def process_no_feedback(callback: CallbackQuery) -> None:
     # await callback.message.answer(text='Редактирование отзывов на WB сейчас не доступно.'
     #                                    ' Рекомендуем удалить отзыв, не соответствующий условиям, и написать новый.')
     await callback.message.answer_photo(photo='AgACAgIAAxkBAAIDUmYJuB1GmJnBZC8sD3-GvQKg1aNZAAKR1TEbwqNRSP8PsRsnYhyKAQADAgADeQADNAQ',
-                                        caption='Редактирование отзывов на WB сейчас не доступно.'
-                                       ' Рекомендуем удалить отзыв, не соответствующий условиям, и написать новый.',
-                                        reply_markup=keyboards_get_many())
+                                        caption='Редактирование отзывов на WB сейчас недоступно.'
+                                                ' Рекомендуем удалить отзыв, не соответствующий условиям, и написать новый.')
