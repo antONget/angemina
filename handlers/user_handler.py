@@ -59,6 +59,7 @@ async def process_start_command_user(message: Message, state: FSMContext) -> Non
 async def process_yes_feedback(message: Message, state: FSMContext) -> None:
     logging.info(f'process_yes_feedback: {message.chat.id}')
     await state.set_state(default_state)
+
     await message.answer(text=f'Вы уже оставили отзыв о покупке на WB?',
                          reply_markup=keyboards_feedback())
 
@@ -175,9 +176,13 @@ async def process_get_article(message: Message, state: FSMContext) -> None:
 
 
 @router.message(StateFilter(User.article))
-async def process_get_article_(message: Message) -> None:
+async def process_get_article_(message: Message, state: FSMContext) -> None:
     logging.info(f'process_get_article_: {message.chat.id}')
-    await message.answer(text='Артикул некорректный. Повторите ввод:')
+    if message.text in ['Получить 💰 за отзыв', '🏆 Розыгрыш', '💼 Перейти в магазин', '👤 Поддержка']:
+        await state.set_state(default_state)
+        await message.answer(text='Вы прервали ввод данных, вы можете продолжить позже')
+    else:
+        await message.answer(text='Артикул некорректный. Повторите ввод:')
 
 
 @router.message(F.photo, StateFilter(User.screenshot_bay))
