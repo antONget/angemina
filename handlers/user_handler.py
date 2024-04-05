@@ -56,8 +56,9 @@ async def process_start_command_user(message: Message, state: FSMContext) -> Non
 
 
 @router.message(F.text == 'Получить 💰 за отзыв')
-async def process_yes_feedback(message: Message) -> None:
+async def process_yes_feedback(message: Message, state: FSMContext) -> None:
     logging.info(f'process_yes_feedback: {message.chat.id}')
+    await state.set_state(default_state)
     await message.answer(text=f'Вы уже оставили отзыв о покупке на WB?',
                          reply_markup=keyboards_feedback())
 
@@ -339,8 +340,9 @@ async def process_all_good(callback: CallbackQuery, state: FSMContext, bot: Bot)
 
 
 @router.message(F.text == '🏆 Розыгрыш')
-async def process_raffle(message: Message) -> None:
+async def process_raffle(message: Message, state: FSMContext) -> None:
     logging.info(f'process_raffle: {message.chat.id}')
+    await state.set_state(default_state)
     await message.answer(text=f'Прими участие и выиграй до 5000₽ за фото!',
                          reply_markup=keyboards_raffle())
 
@@ -402,8 +404,9 @@ async def process_get_data_feedback(message: Message, state: FSMContext) -> None
 
 
 @router.message(F.text == '👤 Поддержка')
-async def process_support(message: Message) -> None:
+async def process_support(message: Message, state: FSMContext) -> None:
     logging.info(f'process_support: {message.chat.id}')
+    await state.set_state(default_state)
     await message.answer(text=f'Если у вас возникли вопросы, вы можете задать их менеджеру перейдя по кнопке'
                               f' «Поддержка»',
                          reply_markup=keyboards_support())
