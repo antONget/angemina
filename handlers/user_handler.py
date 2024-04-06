@@ -1,3 +1,4 @@
+
 import asyncio
 
 from aiogram import Router, F, Bot
@@ -12,8 +13,8 @@ import re
 from config_data.config import Config, load_config
 from keyboards.keyboards_user import keyboards_main_menu, keyboards_feedback, keyboards_get_many, \
     keyboards_150_condition, keyboards_250_condition, get_contact, keyboards_continue_screen_bay, \
-    keyboards_continue_screen_feedback, keyboards_all_done, keyboards_continue_photo, keyboards_raffle, \
-    keyboards_raffle_, keyboards_support
+    keyboards_continue_screen_feedback, keyboards_all_done, keyboards_continue_photo,\
+    keyboards_support, keyboards_marketplace
 
 router = Router()
 # Загружаем конфиг в переменную config
@@ -56,12 +57,18 @@ async def process_start_command_user(message: Message, state: FSMContext) -> Non
 
 
 @router.message(F.text == 'Получить 💰 за отзыв')
-async def process_yes_feedback(message: Message, state: FSMContext) -> None:
-    logging.info(f'process_yes_feedback: {message.chat.id}')
+async def process_get_many(message: Message, state: FSMContext) -> None:
+    logging.info(f'process_get_many: {message.chat.id}')
     await state.set_state(default_state)
+    await message.answer(text=f'На каком МП вы приобрели товар?',
+                         reply_markup=keyboards_marketplace())
 
-    await message.answer(text=f'Вы уже оставили отзыв о покупке на WB?',
-                         reply_markup=keyboards_feedback())
+
+@router.callback_query(F.data == 'wildberries')
+async def process_mp_wildberries(callback: CallbackQuery, state: FSMContext) -> None:
+    logging.info(f'process_mp_wildberries: {callback.message.chat.id}')
+    await callback.message.answer(text=f'Вы уже оставили отзыв о покупке на WB?',
+                                  reply_markup=keyboards_feedback())
 
 
 @router.callback_query(F.data == 'yes_feedback')
@@ -295,10 +302,6 @@ async def get_phone_user(message: Message, state: FSMContext) -> None:
 async def process_all_good(callback: CallbackQuery, state: FSMContext, bot: Bot) -> None:
     logging.info(f'process_get_phone: {callback.message.chat.id}')
     user_dict[callback.message.chat.id] = await state.update_data()
-    # await bot.send_message(chat_id=config.tg_bot.channel,
-    #                        text=f'Пользователь: {user_dict[callback.message.chat.id]["user_name"]}\n'
-    #                             f'Артикул: {user_dict[callback.message.chat.id]["article"]}\n'
-    #                             f'Телефон: {user_dict[callback.message.chat.id]["phone"]}')
     media = []
     for image_id in user_dict[callback.message.chat.id]['image_id_list_feedback']:
         media.append(InputMediaPhoto(media=image_id))
@@ -312,100 +315,22 @@ async def process_all_good(callback: CallbackQuery, state: FSMContext, bot: Bot)
             media.append(InputMediaPhoto(media=image_id))
     if 'image_id_list_photo' in user_dict[callback.message.chat.id]:
         if len(user_dict[callback.message.chat.id]['image_id_list_photo']):
-            for image_id in user_dict[callback.message.chat.id]['image_id_list_bay']:
+            for image_id in user_dict[callback.message.chat.id]['image_id_list_photo']:
                 media.append(InputMediaPhoto(media=image_id))
+        user_dict[callback.message.chat.id]['image_id_list_photo'] = []
+    # if user_dict[callback.message.chat.id]['raffle'] == 'no':
+    if len(media) <= 10:
+        await bot.send_media_group(chat_id=config.tg_bot.channel,
+                                   media=media)
+    else:
+        await bot.send_media_group(chat_id=config.tg_bot.channel,
+                                   media=media[:10])
+        await bot.send_media_group(chat_id=config.tg_bot.channel,
+                                   media=media[10:])
 
-    if user_dict[callback.message.chat.id]['raffle'] == 'no':
-        if len(media) <= 10:
-            await bot.send_media_group(chat_id=config.tg_bot.channel,
-                                       media=media)
-        else:
-            await bot.send_media_group(chat_id=config.tg_bot.channel,
-                                       media=media[:10])
-            await bot.send_media_group(chat_id=config.tg_bot.channel,
-                                       media=media[10:])
-
-        await callback.message.answer(text='В течение 5 рабочих дней наши менеджеры проверят ваш отзыв и сделают'
-                                           ' вам перевод.',
-                                      reply_markup=keyboards_main_menu())
-    elif user_dict[callback.message.chat.id]['raffle'] == 'yes':
-        if len(media) <= 10:
-            await bot.send_media_group(chat_id=config.tg_bot.channel_raffle,
-                                       media=media)
-        else:
-            await bot.send_media_group(chat_id=config.tg_bot.channel_raffle,
-                                       media=media[:10])
-            await bot.send_media_group(chat_id=config.tg_bot.channel_raffle,
-                                       media=media[10:])
-        await callback.message.answer(text='Благодарим за заявку! Вы стали участником конкурса фотографий бренда'
-                                           ' Angimina. В начале каждого месяца мы'
-                                           ' объявляем призеров за предыдущий. С победителями связываемся в личных'
-                                           ' сообщениях.',
-                                      reply_markup=keyboards_main_menu())
-
-
-@router.message(F.text == '🏆 Розыгрыш')
-async def process_raffle(message: Message, state: FSMContext) -> None:
-    logging.info(f'process_raffle: {message.chat.id}')
-    await state.set_state(default_state)
-    await message.answer(text=f'Прими участие и выиграй до 5000₽ за фото!',
-                         reply_markup=keyboards_raffle())
-
-
-@router.callback_query(F.data == 'what_raffle')
-async def process_what_raffle(callback: CallbackQuery) -> None:
-    logging.info(f'process_what_raffle: {callback.message.chat.id}')
-    await callback.message.answer(text='Раз в месяц среди присланных фотографий мы выбираем лучшие и награждаем их'
-                                       ' авторов денежными призами!\n\n'
-                                       'Дарим:\n'
-                                       '🥇за 1 место — 5000₽\n'
-                                       '🥈за 2 место — 3000₽\n'
-                                       '🥉за 3 место — 2000₽*\n'
-                                       '🏅за 4-10 место — 1000₽*\n'
-                                       'А также нами будут выбраны 20 победителей, чьи фотографии мы разместим'
-                                       ' в карточках наших товаров🤩в течении 1 месяца.\n'
-                                       '*Розыгрывается при наличии 20 и более участников.')
-    await callback.message.answer(text='Если вы готовы побороться и выиграть до 5000₽:\n'
-                                       '1) Сделайте самое красивое фото нашей одежды.\n'
-                                       '2) Оставьте отзыв 5⭐️, прикрепив ваши фотографии.\n'
-                                       '3) Нажмите кнопку ниже «Участвовать» и прикрепите скриншот с'
-                                       ' вашим отзывом.\n'
-                                       '4) Дождитесь результатов! В начале каждого месяца мы объявляем победителей'
-                                       ' за предыдущий месяц.\n'
-                                       'Если вы победите — мы свяжемся с вами по контактному номеру телефона.',
-                                  reply_markup=keyboards_raffle_())
-
-
-@router.callback_query(F.data == 'yes_raffle')
-async def process_what_raffle(callback: CallbackQuery, state: FSMContext) -> None:
-    logging.info(f'process_what_raffle: {callback.message.chat.id}')
-    await callback.message.answer(text='Для участия в конкурсе следуйте инструкции.')
-    await asyncio.sleep(1)
-    await callback.message.answer(text='Укажите дату публикация отзыва в числовом формате вида: число, месяц, год.'
-                                       ' Например, 01.01.2024')
-    await state.set_state(User.data_feedback)
-
-
-@router.message(F.text, StateFilter(User.data_feedback))
-async def process_get_data_feedback(message: Message, state: FSMContext) -> None:
-    logging.info(f'process_get_data_feedback: {message.chat.id}')
-    await state.update_data(data_feedback=message.text)
-    await state.update_data(feedback='250')
-    await state.update_data(raffle='yes')
-    image_1 = 'AgACAgIAAxkBAAID7WYJyBV0qiDrUw6qvFbev_9eL7E9AALk1TEbwqNRSLVkg940loF5AQADAgADeQADNAQ'
-    image_2 = 'AgACAgIAAxkBAAID7mYJyBXGBAgI66GSmEQ1PrmfLbt8AALl1TEbwqNRSDVf_xEY-stMAQADAgADeQADNAQ'
-    image_3 = 'AgACAgIAAxkBAAID8mYJyEm6xUENtAABzhBOFsZ73aaWlgAC6dUxG8KjUUgDOAQcpU6SpgEAAwIAA3kAAzQE'
-    image_4 = 'AgACAgIAAxkBAAID8GYJyBWxAiwiNrdSwlxUvrO8l4h1AALn1TEbwqNRSO4rAvtMZAXHAQADAgADeQADNAQ'
-    image_5 = 'AgACAgIAAxkBAAID8WYJyBVYbISabks414mCX9Fq6K7aAALo1TEbwqNRSL3YpJ5AzKmDAQADAgADeQADNAQ'
-    media = []
-    media.append(InputMediaPhoto(media=image_1))
-    media.append(InputMediaPhoto(media=image_2))
-    media.append(InputMediaPhoto(media=image_3))
-    media.append(InputMediaPhoto(media=image_4))
-    media.append(InputMediaPhoto(media=image_5))
-    await message.answer_media_group(media=media)
-    await message.answer(text='Введите артикул товара')
-    await state.set_state(User.article)
+    await callback.message.answer(text='В течение 5 рабочих дней наши менеджеры проверят ваш отзыв и сделают'
+                                       ' вам перевод.',
+                                  reply_markup=keyboards_main_menu())
 
 
 @router.message(F.text == '👤 Поддержка')
@@ -433,14 +358,16 @@ async def process_no_feedback(callback: CallbackQuery, state: FSMContext) -> Non
     media.append(InputMediaPhoto(media=image_2))
 
     await asyncio.sleep(3)
-    await callback.message.answer(text=f'За отзыв без фото вы можете получить 150₽.\n'  
+    await callback.message.answer(text=f'<b>За отзыв без фото вы можете получить 150₽.</b>\n'  
                                        f' 1. Напишите отзыв не менее, чем из двух предложений, с оценкой '
                                        f'5 ⭐️ звезд.\n'
                                        f' 2. Разместите отзыв через мобильное приложение WB.\n'
-                                       f' 3. В отзыве не упоминайте нашу визитку и не размещайте ее на фотографиях.\n\n')
+                                       f' 3. В отзыве не упоминайте нашу визитку и не размещайте ее на'
+                                       f' фотографиях.\n\n',
+                                  parse_mode='html')
     await asyncio.sleep(3)
     await callback.message.answer_media_group(media=media)
-    await callback.message.answer(text=f'За отзыв с фото вы можете получить 250₽.\n'
+    await callback.message.answer(text=f'<b>За отзыв с фото вы можете получить 250₽.</b>\n'
                                        f' 1. Напишите отзыв не менее, чем из двух предложений, с оценкой '
                                        f'5 ⭐️ звезд.\n'
                                        f'Прикрепите к отзыву 5 качественных фотографий, как в примере выше.\n'
@@ -449,9 +376,14 @@ async def process_no_feedback(callback: CallbackQuery, state: FSMContext) -> Non
                                        f' разных планов и ракурсов (сзади/спереди). В кадре нет бардака и посторонних'
                                        f' предметов.\n'
                                        f' 2. Разместите отзыв через мобильное приложение WB.\n'
-                                       f' 3. В отзыве не упоминайте нашу визитку и не размещайте ее на фотографиях.\n\n')
-    await callback.message.answer(text=f'При не выполнении всех условий, мы оставляем за собой право'
-                                       f' отказать в вознаграждении.')
+                                       f' 3. В отзыве не упоминайте нашу визитку и не размещайте ее на'
+                                       f' фотографиях.\n\n',
+                                  parse_mode='html')
+    await callback.message.answer(text=f'В случае невыполнении всех условий, мы оставляем за собой право отказать в'
+                                       f' вознаграждении.\n'
+                                       f'Обращаем ваше внимание, что можно получить 150₽ за отзыв без фото либо 250₽'
+                                       f' за отзыв с фото. Вознаграждения не суммируются.\n'
+                                       f'Выплата производится только на номера российских операторов связи.')
 
 
 @router.callback_query(F.data == 'feedback_edit')
@@ -461,4 +393,5 @@ async def process_no_feedback(callback: CallbackQuery) -> None:
     #                                    ' Рекомендуем удалить отзыв, не соответствующий условиям, и написать новый.')
     await callback.message.answer_photo(photo='AgACAgIAAxkBAAIDUmYJuB1GmJnBZC8sD3-GvQKg1aNZAAKR1TEbwqNRSP8PsRsnYhyKAQADAgADeQADNAQ',
                                         caption='Редактирование отзывов на WB сейчас недоступно.'
-                                                ' Рекомендуем удалить отзыв, не соответствующий условиям, и написать новый.')
+                                                ' Рекомендуем удалить отзыв, не соответствующий условиям, и'
+                                                ' написать новый.')
