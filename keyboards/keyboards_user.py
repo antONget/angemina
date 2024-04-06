@@ -111,6 +111,6 @@ def keyboards_raffle_():
 
 def keyboards_support():
     logging.info("keyboards_support")
-    button_2 = InlineKeyboardButton(text='Поддержка', url='https://t.me/four4five')
+    button_2 = InlineKeyboardButton(text='Поддержка', url='https://t.me/AngeminaKids')
     keyboard = InlineKeyboardMarkup(inline_keyboard=[[button_2]],)
     return keyboard
