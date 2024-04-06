@@ -3,7 +3,7 @@ import logging
 
 from aiogram import Bot, Dispatcher
 from config_data.config import Config, load_config
-from handlers import other_handlers, user_handler
+from handlers import other_handlers, user_handler, user_ozon_handlers, user_raffle_handler
 # Инициализируем logger
 logger = logging.getLogger(__name__)
 
@@ -30,6 +30,8 @@ async def main():
     # Регистрируем router в диспетчере
     # dp.include_router(other_handlers.router)
     dp.include_router(user_handler.router)
+    dp.include_router(user_ozon_handlers.router)
+    dp.include_router(user_raffle_handler.router)
     dp.include_router(other_handlers.router)
 
     # Пропускаем накопившиеся update и запускаем polling
