@@ -15,6 +15,14 @@ def keyboards_main_menu():
     return keyboard
 
 
+def keyboards_marketplace():
+    logging.info("keyboards_marketplace")
+    button_1 = InlineKeyboardButton(text='Ozon',  callback_data='ozon')
+    button_2 = InlineKeyboardButton(text='Wildberries',  callback_data='wildberries')
+    keyboard = InlineKeyboardMarkup(inline_keyboard=[[button_2, button_1]],)
+    return keyboard
+
+
 def keyboards_feedback():
     logging.info("keyboards_start")
     button_1 = InlineKeyboardButton(text='Да',  callback_data='yes_feedback')
